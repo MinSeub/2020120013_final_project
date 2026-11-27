@@ -16,12 +16,10 @@ import config
 def 읽기(경로):
     """CSV 파일을 읽어 사전 목록으로 돌려준다."""
     행들 = []
-    try:
-        with open(경로, encoding="utf-8") as f:
-            for 행 in csv.DictReader(f):
-                행들.append(행)
-    except:
-        return []
+    with open(경로, encoding="utf-8") as f:
+        for 행 in csv.DictReader(f):
+            행들.append(행)
+
     return 행들
 
 
@@ -31,7 +29,7 @@ def 정제(행들, 설정):
     버림 = {"수치가 비어 있음": 0, "숫자가 아님": 0, "범위 밖": 0}
 
     for 행 in 행들:
-        분류 = 행[설정["분류열"]]
+        분류 = 표준화_분류(행[설정["분류열"]])
         원값 = 행[설정["수치열"]]
 
         if 원값 is None or 원값.strip() == "":
@@ -44,7 +42,7 @@ def 정제(행들, 설정):
             버림["숫자가 아님"] += 1
             continue
 
-        if 값 < 0 or 값 >= 설정["최댓값"]:
+        if 값 < 0 or 값 > 설정["최댓값"]:
             버림["범위 밖"] += 1
             continue
 
@@ -96,6 +94,21 @@ def 분석하고_출력하기(남김, 설정):
         print("전체 평균: %.1f %s" % (전체합 / len(남김), 단위))
     else:
         print("전체 평균: 분석할 행이 없습니다")
+
+
+def 표준화_분류(분류):
+    # 별칭 비교 시 공백과 영문 대소문자를 무시한다.
+    비교값 = "".join(분류.split()).casefold()
+    별칭 = {
+        "물리": "물리",
+        "영어": "영어",
+        "english": "영어",
+        "수학": "수학",
+        "math": "수학",
+        "프로그래밍": "프로그래밍",
+        "programming": "프로그래밍",
+    }
+    return 별칭.get(비교값, 분류.strip())
 
 
 def main():
